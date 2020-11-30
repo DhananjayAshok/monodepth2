@@ -112,13 +112,22 @@ class Trainer:
 
         # data
         datasets_dict = {"kitti": datasets.KITTIRAWDataset,
-                         "kitti_odom": datasets.KITTIOdomDataset}
+                         "kitti_odom": datasets.KITTIOdomDataset,
+                         "simple": datasets.mono_dataset.SimpleDataset,
+                         }
         self.dataset = datasets_dict[self.opt.dataset]
 
-        fpath = os.path.join(os.path.dirname(__file__), "splits", self.opt.split, "{}_files.txt")
+        #fpath = os.path.join(os.path.dirname(__file__), "splits", self.opt.split, "{}_files.txt")
 
-        train_filenames = readlines(fpath.format("train"))
-        val_filenames = readlines(fpath.format("val"))
+        data_dir = os.path.join(os.path.dirname(__file__), "data")
+        train_dir = os.path.join(data_dir, "train")
+        val_dir = os.path.join(data_dir, "val")
+
+        train_filenames = [os.path.join(train_dir, "rgb", x) for x in os.listdir(os.path.join(train_dir, "rgb"))]
+        val_filenames = [os.path.join(val_dir, "rgb", x) for x in os.listdir(os.path.join(val_dir, "rgb"))]
+
+        train_filenames = train_filenames
+        val_filenames = val_filenames
         img_ext = '.png' if self.opt.png else '.jpg'
 
         num_train_samples = len(train_filenames)
@@ -126,7 +135,7 @@ class Trainer:
 
         train_dataset = self.dataset(
             self.opt.data_path, train_filenames, self.opt.height, self.opt.width,
-            self.opt.frame_ids, 4, is_train=True, img_ext=img_ext)
+            self.opt.frame_ids, len(self.opt.scales), is_train=True, img_ext=img_ext)
         self.train_loader = DataLoader(
             train_dataset, self.opt.batch_size, True,
             num_workers=self.opt.num_workers, pin_memory=True, drop_last=True)

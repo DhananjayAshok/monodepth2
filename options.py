@@ -44,8 +44,8 @@ class MonodepthOptions:
         self.parser.add_argument("--dataset",
                                  type=str,
                                  help="dataset to train on",
-                                 default="kitti",
-                                 choices=["kitti", "kitti_odom", "kitti_depth", "kitti_test"])
+                                 default="simple",
+                                 choices=["kitti", "kitti_odom", "kitti_depth", "kitti_test", "simple"])
         self.parser.add_argument("--png",
                                  help="if set, trains from raw KITTI png files (instead of jpgs)",
                                  action="store_true")
@@ -65,7 +65,7 @@ class MonodepthOptions:
                                  nargs="+",
                                  type=int,
                                  help="scales used in the loss",
-                                 default=[0, 1, 2, 3])
+                                 default=[0])
         self.parser.add_argument("--min_depth",
                                  type=float,
                                  help="minimum depth",
@@ -81,7 +81,7 @@ class MonodepthOptions:
                                  nargs="+",
                                  type=int,
                                  help="frames to load",
-                                 default=[0, -1, 1])
+                                 default=[0])
 
         # OPTIMIZATION options
         self.parser.add_argument("--batch_size",

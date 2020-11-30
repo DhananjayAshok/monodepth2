@@ -207,3 +207,65 @@ class MonoDataset(data.Dataset):
 
     def get_depth(self, folder, frame_index, side, do_flip):
         raise NotImplementedError
+
+class SimpleDataset(data.Dataset):
+    def __init__(self,
+                 data_path,
+                 filenames,
+                 height,
+                 width,
+                 frame_idxs,
+                 num_scales,
+                 is_train=False,
+                 img_ext='.jpg'):
+        super(SimpleDataset, self).__init__()
+
+        self.data_path = data_path
+        self.filenames = filenames
+        self.height = height
+        self.width = width
+        self.num_scales = 1
+        self.interp = Image.ANTIALIAS
+        self.frame_idxs = [0]
+
+        self.is_train = is_train
+        self.img_ext = img_ext
+
+        self.loader = pil_loader
+        self.to_tensor = transforms.ToTensor()
+
+        # We need to specify augmentations differently in newer versions of torchvision.
+        # We first try the newer tuple version; if this fails we fall back to scalars
+        try:
+            self.brightness = (0.8, 1.2)
+            self.contrast = (0.8, 1.2)
+            self.saturation = (0.8, 1.2)
+            self.hue = (-0.1, 0.1)
+            transforms.ColorJitter.get_params(
+                self.brightness, self.contrast, self.saturation, self.hue)
+        except TypeError:
+            self.brightness = 0.2
+            self.contrast = 0.2
+            self.saturation = 0.2
+            self.hue = 0.1
+
+        self.resize = {}
+        for i in range(self.num_scales):
+            s = 2 ** i
+            self.resize[i] = transforms.Resize((self.height // s, self.width // s),
+                                               interpolation=self.interp)
+
+        self.load_depth = True
+
+    def __len__(self):
+        return len(self.filenames)
+
+    def __getitem__(self, index):
+        items = {}
+        data_dir = os.path.join(*(self.filenames[index].split("\\")[:-2]))
+        depth_file_name = os.path.basename(filenames[index])
+        depth_file = os.path.join(data_dir, "d", depth_file_name)
+        items[("color", 0, 0)] = pil_loader(self.filenames[index])
+        items[("color_aug", 0, 0)] = pil_loader(self.filenames[index])
+        items[("depth_gt")] = pil_loader(depth_file)
+        return items
